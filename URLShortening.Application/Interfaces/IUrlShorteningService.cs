@@ -6,6 +6,7 @@ namespace URLShortening.Application.Interfaces
 	{
         Task<ShortenUrlResponse> ShortenUrl(ShortenUrlRequest request);
         Task<RetrieveUrlResponse> RetrieveUrl(string shortUrl);
+        Task<GetUrlHitsResponse> GetUrlHits(string shortUrl);
     }
 }
 
