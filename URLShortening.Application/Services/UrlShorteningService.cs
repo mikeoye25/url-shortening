@@ -151,7 +151,6 @@ namespace URLShortening.Application.Services
             return response;
         }
 
-
         public async Task<GetUrlHitsResponse> GetUrlHits(string shortUrl)
         {
             Logger.LogInformation("Executing {Action} with parameters: {Parameters}", nameof(GetUrlHits), shortUrl);
