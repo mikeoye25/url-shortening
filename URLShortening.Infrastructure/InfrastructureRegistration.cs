@@ -8,7 +8,7 @@ namespace URLShortening.Infrastructure
 {
     public static class InfrastructureRegistration
 	{
-        public static IServiceCollection Add(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             // uses PostgreSQL - a persistent data store
             services.AddEntityFrameworkNpgsql().AddDbContext<URLShorteningContext>(options =>

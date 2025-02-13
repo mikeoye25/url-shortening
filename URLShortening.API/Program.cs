@@ -14,8 +14,8 @@ builder.Logging.AddSerilog(logger);
 Log.Logger = logger;
 Log.Information("Starting up...");
 
-builder.Services.Add();
-builder.Services.Add(builder.Configuration);
+builder.Services.AddApplicationServices(builder.Configuration);
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 builder.Services.AddControllers();
 
@@ -32,6 +32,8 @@ app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 app.MapControllers();
 

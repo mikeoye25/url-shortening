@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using URLShortening.Application.Interfaces;
 using URLShortening.Application.ViewModels;
 
@@ -18,6 +19,7 @@ namespace URLShortening.API.Controllers
         }
 
         // 1. POST /shorten – Accepts a long URL and returns a shortened URL.
+        [EnableRateLimiting("fixed")]
         [HttpPost("shorten")]
         [ProducesResponseType(typeof(ShortenUrlResponse), (int)HttpStatusCode.OK)]
         public async Task<ActionResult<ShortenUrlResponse>> ShortenUrl([FromBody] ShortenUrlRequest request)
