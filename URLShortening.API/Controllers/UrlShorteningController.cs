@@ -36,5 +36,14 @@ namespace URLShortening.API.Controllers
             var response = await UrlShorteningService.RetrieveUrl(shortUrl);
             return Ok(response);
         }
+
+        // 3. Bonus: Add a GET /stats/{shortUrl} endpoint to show how many times a URL has been accessed.
+        [HttpGet("/stats/{shortUrl}")]
+        [ProducesResponseType(typeof(GetUrlHitsResponse), (int)HttpStatusCode.OK)]
+        public async Task<ActionResult<GetUrlHitsResponse>> GetUrlHits(string shortUrl)
+        {
+            var response = await UrlShorteningService.GetUrlHits(shortUrl);
+            return Ok(response);
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Net.Quic;
+using System.Text.Json;
 using System.Web;
 using Microsoft.Extensions.Logging;
 using URLShortening.Application.Contracts;
@@ -44,6 +45,21 @@ namespace URLShortening.Application.Services
             }
         }
 
+        private static string GetCode(string url)
+        {
+            url = HttpUtility.UrlDecode(url);
+            if (!Uri.TryCreate(url, UriKind.Absolute, out _))
+            {
+                return string.Empty;
+            }
+            var urlParts = url.Split('/');
+            if (urlParts.Length < 1)
+            {
+                return string.Empty;
+            }
+            return urlParts[urlParts.Length - 1];
+        }
+
         public async Task<ShortenUrlResponse> ShortenUrl(ShortenUrlRequest request)
         {
             Logger.LogInformation("Executing {Action} with parameters: {Parameters}", nameof(ShortenUrl), JsonSerializer.Serialize(request));
@@ -62,6 +78,7 @@ namespace URLShortening.Application.Services
                 LongUrl = request.Url,
                 Code = code,
                 ShortUrl = $"{createdUri.Scheme}://{code}",
+                HitCount = 0,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -80,32 +97,38 @@ namespace URLShortening.Application.Services
         {
             Logger.LogInformation("Executing {Action} with parameters: {Parameters}", nameof(ShortenUrl), shortUrl);
             var response = new RetrieveUrlResponse { Success = false };
-            shortUrl = HttpUtility.UrlDecode(shortUrl);
-            Uri? createdUri = null;
-            if (!Uri.TryCreate(shortUrl, UriKind.Absolute, out createdUri))
-            {
-                response.ErrorReason = ErrorConstants.INVALID_URL;
-                return response;
-            }
-            var urlParts = shortUrl.Split('/');
-            Logger.LogInformation($"urlParts: {urlParts.Length}");
-            var code = string.Empty;
-            if (urlParts.Length > 0)
-            {
-                code = urlParts[urlParts.Length - 1];
-            }
-            else
-            {
-                response.ErrorReason = ErrorConstants.INVALID_URL;
-                return response;
-            }
-            var shortenedUrl = await ShortenedUrlRepository.GetFirstOrDefault(s => s.Code == code && s.ShortUrl == shortUrl);
+            var code = GetCode(shortUrl);
+            var shortenedUrl = await ShortenedUrlRepository.GetFirstOrDefault(s => s.Code == code);
             if (shortenedUrl is null)
             {
                 response.ErrorReason = ErrorConstants.SHORTENED_URL_DOES_NOT_EXIST;
                 return response;
             }
+            shortenedUrl.HitCount++;
+            var data = await ShortenedUrlRepository.Update(shortenedUrl);
+            if (data is null)
+            {
+                response.ErrorReason = ErrorConstants.SHORTENED_URL_UPDATE_FAILED;
+                return response;
+            }
             response.LongUrl = shortenedUrl.LongUrl;
+            response.Success = true;
+            return response;
+        }
+
+
+        public async Task<GetUrlHitsResponse> GetUrlHits(string shortUrl)
+        {
+            Logger.LogInformation("Executing {Action} with parameters: {Parameters}", nameof(GetUrlHits), shortUrl);
+            var response = new GetUrlHitsResponse { Success = false };
+            var code = GetCode(shortUrl);
+            var shortenedUrl = await ShortenedUrlRepository.GetFirstOrDefault(s => s.Code == code);
+            if (shortenedUrl is null)
+            {
+                response.ErrorReason = ErrorConstants.SHORTENED_URL_DOES_NOT_EXIST;
+                return response;
+            }
+            response.UrlHits = shortenedUrl.HitCount;
             response.Success = true;
             return response;
         }
