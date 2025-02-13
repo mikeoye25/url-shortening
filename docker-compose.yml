@@ -1,0 +1,85 @@
+
+services:
+  db:
+    image: postgres
+    restart: always
+    container_name: urlshortening-postgres
+    ports:
+      - 5432:5432
+    networks: 
+      - urlshortening_network
+    environment:
+      POSTGRES_PASSWORD: postgrespw
+      
+  adminer:
+    image: adminer
+    restart: always
+    container_name: urlshortening-adminer
+    ports:
+      - 8083:8080
+    networks: 
+      - urlshortening_network
+
+  urlshorteningapi:
+    image: ${DOCKER_REGISTRY-}urlshorteningapi
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: urlshortening.API/Dockerfile
+    ports:
+      - 8082:80
+      - 8092:443
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=8092
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=pa55w0rd!
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+    volumes:
+      - ~/.aspnet/https:/https:ro
+    networks: 
+      - urlshortening_network
+
+  seq:
+    image: datalust/seq:latest
+    ports:
+      - "5341:5341"
+      - "9000:80"
+    environment:
+      ACCEPT_EULA: "Y"
+    networks: 
+      - urlshortening_network
+    restart: unless-stopped
+    volumes:
+      - my-seq-vol:/data
+      
+  seq-input-syslog:
+    image: datalust/seq-input-syslog:latest
+    depends_on:
+      - seq
+    ports:
+      - "514:514/udp"
+    networks: 
+      - urlshortening_network
+    environment:
+      SEQ_ADDRESS: "http://seq:5341"
+    restart: unless-stopped
+
+  seq-input-gelf:
+    image: datalust/seq-input-gelf:latest
+    depends_on:
+      - seq
+    ports:
+      - "12201:12201/udp"
+    networks: 
+      - urlshortening_network
+    environment:
+      SEQ_ADDRESS: "http://seq:5341"
+    restart: unless-stopped
+
+networks:
+  urlshortening_network:
+
+volumes:
+  my-seq-vol:
+      
