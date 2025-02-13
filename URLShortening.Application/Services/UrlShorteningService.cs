@@ -1,11 +1,9 @@
 ﻿using System.Text.Json;
-using System.Web;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using URLShortening.Application.Contracts;
 using URLShortening.Application.Interfaces;
 using URLShortening.Application.ViewModels;
-using URLShortening.Domain;
 using URLShortening.Domain.Constants;
 using URLShortening.Domain.Entities;
 
@@ -15,7 +13,6 @@ namespace URLShortening.Application.Services
     {
         private readonly IShortenedUrlRepository ShortenedUrlRepository;
         private readonly ILogger<UrlShorteningService> Logger;
-        private readonly Random _random = new();
         private IMemoryCache Cache;
         private const string codeCacheKey = "code";
 
@@ -28,40 +25,15 @@ namespace URLShortening.Application.Services
 
         private async Task<string> GenerateUniqueCode()
         {
-            var codeChars = new char[ShortLinkSettings.Length];
-            var maxValue = ShortLinkSettings.Alphabet.Length;
-
             while (true)
             {
-                for (var i = 0; i < ShortLinkSettings.Length; i++)
-                {
-                    var randomIndex = _random.Next(maxValue);
-
-                    codeChars[i] = ShortLinkSettings.Alphabet[randomIndex];
-                }
-
-                var code = new string(codeChars);
+                var code = Utilities.GenerateCode();
                 // handles duplicate short URLs
                 if (!await ShortenedUrlRepository.Any(s => s.Code == code))
                 {
                     return code;
                 }
             }
-        }
-
-        private static string GetCode(string url)
-        {
-            url = HttpUtility.UrlDecode(url);
-            if (!Uri.TryCreate(url, UriKind.Absolute, out _))
-            {
-                return string.Empty;
-            }
-            var urlParts = url.Split('/');
-            if (urlParts.Length < 1)
-            {
-                return string.Empty;
-            }
-            return urlParts[urlParts.Length - 1];
         }
 
         private async Task<RetrieveUrlResponse> UpdateUrl(string code)
@@ -99,13 +71,11 @@ namespace URLShortening.Application.Services
             Logger.LogInformation("Executing {Action} with parameters: {Parameters}", nameof(ShortenUrl), JsonSerializer.Serialize(request));
             var response = new ShortenUrlResponse { Success = false };
             Uri? createdUri = null;
-
             if (!Uri.TryCreate(request.Url, UriKind.Absolute, out createdUri))
             {
                 response.ErrorReason = ErrorConstants.INVALID_URL;
                 return response;
             }
-
             var code = await GenerateUniqueCode();
             var shortenedUrl = new ShortenedUrl
             {
@@ -115,7 +85,6 @@ namespace URLShortening.Application.Services
                 HitCount = 0,
                 CreatedDate = DateTime.UtcNow
             };
-
             var data = await ShortenedUrlRepository.Insert(shortenedUrl);
             if (data is null)
             {
@@ -131,7 +100,7 @@ namespace URLShortening.Application.Services
         {
             Logger.LogInformation("Executing {Action} with parameters: {Parameters}", nameof(ShortenUrl), shortUrl);
             var response = new RetrieveUrlResponse { Success = false };
-            var code = GetCode(shortUrl);
+            var code = Utilities.GetCode(shortUrl);
 
             // In-Memory Caching
             if (Cache.TryGetValue($"{codeCacheKey}:{code}", out ShortenedUrl? url))
@@ -155,7 +124,7 @@ namespace URLShortening.Application.Services
         {
             Logger.LogInformation("Executing {Action} with parameters: {Parameters}", nameof(GetUrlHits), shortUrl);
             var response = new GetUrlHitsResponse { Success = false };
-            var code = GetCode(shortUrl);
+            var code = Utilities.GetCode(shortUrl);
             var shortenedUrl = await ShortenedUrlRepository.GetFirstOrDefault(s => s.Code == code);
             if (shortenedUrl is null)
             {

@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Readme.md = Readme.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "URLShortening.Tests", "URLShortening.Tests\URLShortening.Tests.csproj", "{CE94BBA5-61A5-4CAA-9124-8FFB8065C5FA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +42,10 @@ Global
 		{48DCAC00-1C59-4090-ABE4-1424ACDDDE58}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48DCAC00-1C59-4090-ABE4-1424ACDDDE58}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48DCAC00-1C59-4090-ABE4-1424ACDDDE58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE94BBA5-61A5-4CAA-9124-8FFB8065C5FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE94BBA5-61A5-4CAA-9124-8FFB8065C5FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE94BBA5-61A5-4CAA-9124-8FFB8065C5FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE94BBA5-61A5-4CAA-9124-8FFB8065C5FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
